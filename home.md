@@ -19,12 +19,11 @@ A tale scopo è stato creato il dominio "mynetwork.local" su una macchina virtua
 Su windows server 2022 è stato installato e configurato Windows Active Directory Domain Services, DNS e DHCP. Utilizzando il DHCP ho assegnato indirizzi IP statici, all’interno di un range prefissato, ai nodi facenti parte dell’organizzazione. In particolare l’indirizzo IP del nodo su cui è presente il DC è 192.168.1.233; alla macchina con Windows 10 è stato assegnato l’indirizzo IP 192.168.1.137. <br>
 Al dominio “mynetwork.local” appartengono vari utenti, alcuni dei quali fanno parte di gruppi. Di rilievo è, ad esempio, l’utente Mario, il cui account è stato configurato con “Do not require Kerberos preauthentication”. Questo assume particolare importanza per portare a termine il AS-REP roasting. Del dominio fanno parte anche altri utenti con pre authentication, uno dei quali eseguirà un interactive logon nella seconda parte della demo
 
-&nbsp;
 
-![The Markdown Mark] (images/Mario.png)
+
+![The Markdown Mark](images/Mario.png)
 _Figura 1: Account di Mario_ 
 
-&nbsp;
 
 
 ### Macchine Virtuali utilizzate
@@ -73,7 +72,7 @@ ciò che segue “ : ” è la risposta del DC, criptata con la chiave di Mario
 
 &nbsp;
 
-![The Markdown Mark] (images/impacket.png)
+![The Markdown Mark](images/impacket.png)
 _Figura 2: Esecuzione di GetNPUsers_
 
 &nbsp;
@@ -92,7 +91,7 @@ john prenderà le password contenute nel file pwdComuni, usando i parametri spec
 
 &nbsp;
 
-![The Markdown Mark] (images/john.png)
+![The Markdown Mark](images/john.png)
 _Figura 3: Esecuzione di john the ripper_
 
 &nbsp;
@@ -115,7 +114,7 @@ L’idea alla base del funzionamento di questo tool e dell’ARP spoofing è inv
 
 &nbsp;
 
-![The Markdown Mark] (images/ettercap.png)
+![The Markdown Mark](images/ettercap.png)
 _Figura 4: Esecuzione di ettercap_
 
 &nbsp;
@@ -128,7 +127,7 @@ In particolare è interessante osservare i veri indirizzi MAC delle due macchine
 
 &nbsp;
 
-![The Markdown Mark] (images/ARP.png)
+![The Markdown Mark](images/ARP.png)
 _Figura 5: Pacchetti ARP_ 
 
 &nbsp;
@@ -141,7 +140,7 @@ Ora l’attaccante è diventato MITM fra il nodo su cui sta il DC e un nodo in p
 
 &nbsp;
 
-![The Markdown Mark] (images/wireshark.png)
+![The Markdown Mark](images/wireshark.png)
 _Figura 6: Wireshark_
 
 &nbsp;
@@ -158,7 +157,7 @@ questi sono tutti parametri che ci serviranno per costruire la stringa da passar
 
 &nbsp;
 
-![The Markdown Mark] (images/AS-REQ.png)
+![The Markdown Mark](images/AS-REQ.png)
 _Figura 7: AS-REQ nel dettaglio_ 
 
 &nbsp;
@@ -168,7 +167,7 @@ Per costruire la stringa da passare a hashcat si possono consultare degli esempi
 
 &nbsp;
 
-![The Markdown Mark] (images/hashcat.png)
+![The Markdown Mark](images/hashcat.png)
 _Figura 8: Esecuzione di hashcat_ 
 
 &nbsp;
@@ -185,7 +184,7 @@ hashcat si aspetta anche un file di testo contenente alcune password, qui indica
 
 &nbsp;
 
-![The Markdown Mark] (images/resHashcat.png)
+![The Markdown Mark](images/resHashcat.png)
 _Figura 7: Risultato dell'esecuzione di hashcat_ 
 
 &nbsp;
