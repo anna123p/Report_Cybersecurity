@@ -1,4 +1,5 @@
 # Attacchi a Kerberos: AS-REP roasting e Password Cracking di AS-REQ
+&nbsp;
 
 Report per il corso di Cybersecurity[446MI], Università degli Studi di Trieste
 <div style="display: flex; justify-content: space-between;">
