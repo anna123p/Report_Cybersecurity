@@ -20,11 +20,12 @@ A tale scopo è stato creato il dominio "mynetwork.local" su una macchina virtua
 Su windows server 2022 è stato installato e configurato Windows Active Directory Domain Services, DNS e DHCP. Utilizzando il DHCP ho assegnato indirizzi IP statici, all’interno di un range prefissato, ai nodi facenti parte dell’organizzazione. In particolare l’indirizzo IP del nodo su cui è presente il DC è 192.168.1.233; alla macchina con Windows 10 è stato assegnato l’indirizzo IP 192.168.1.137. <br>
 Al dominio “mynetwork.local” appartengono vari utenti, alcuni dei quali fanno parte di gruppi. Di rilievo è, ad esempio, l’utente Mario, il cui account è stato configurato con “Do not require Kerberos preauthentication”. Questo assume particolare importanza per portare a termine il AS-REP roasting. Del dominio fanno parte anche altri utenti con pre authentication, uno dei quali eseguirà un interactive logon nella seconda parte della demo
 
+&nbsp;
 
+<img src="images/Mario.png" alt="Account di Mario" width="600">
+*Figura 1: Account di Mario*
 
-![The Markdown Mark](images/Mario.png)
-_Figura 1: Account di Mario_ 
-
+&nbsp;
 
 
 ### Macchine Virtuali utilizzate
