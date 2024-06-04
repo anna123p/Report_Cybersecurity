@@ -21,7 +21,7 @@ Al dominio “mynetwork.local” appartengono vari utenti, alcuni dei quali fann
 
 &nbsp;
 
-![The Markdown Mark] (https://github.com/anna123p/demoCybersecurity/tree/main/images/Mario.png)
+![The Markdown Mark] (images/Mario.png)
 _Figura 1: Account di Mario_ 
 
 &nbsp;
