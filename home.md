@@ -13,7 +13,6 @@ Il presente elaborato è volto alla dimostrazione di un attacco a kerberos, in p
 - AS-REP roasting 
 - Network Sniffing di AS-REQ e Password Cracking (per un utente con preauthentication)
 
-A tale scopo è stato creato il dominio "mynetwork.local" su una macchina virtuale su cui è stato installato Windows Server 2022. 
 
 ### Macchine Virtuali utilizzate
 Per eseguire la demo verranno utilizzate 3 macchine virtuali (VM - Virtual Machine):
@@ -60,8 +59,8 @@ Analizziamo meglio la risposta del DC: "krb5asrep" è il formato con cui vengono
 In quanto segue indicheremo, per compattezza di notazione, K_mario come la chiave dell'utente Mario.
 
 Per eseguire il password cracking utilizziamo John the Ripper (john). [^5] La stringa ottenuta in riposta dal DC verrà salvata in un file di testo, denominato hash.asrep1. Quindi verrà lanciato john, a cui passiamo:
-- un file di testo contenente ipotetiche password, qui denominato pwdComunit.txt;
-- krb5asrep: il formato con cui calcolare l’hash (poi dal hash si ottiene la chiave); 
+- un file di testo contenente ipotetiche password, qui denominato pwdComuni.txt;
+- krb5asrep: il formato con cui calcolare l’hash (dal hash si ottiene la chiave); 
 - il file contente AS-REP criptato con K_mario, qui hash.asrep1.
 
 Il tool agirà nel modo seguente. Per ogni password (pwd) in pwdComuni.txt:
@@ -72,7 +71,7 @@ Il tool agirà nel modo seguente. Per ogni password (pwd) in pwdComuni.txt:
 ![The Markdown Mark](images/john.png)
 _Figura 2: Esecuzione di john the ripper_
 
-Dalla figura si evince che l’esecuzione di john ha permesso di determinare che la password di Mario è “ciaoBelli!1”. Questo significa che questa password era presente nel file pwdComuni.txt che è stato passato al tool. K_mario è stata quindi ottenuta proprio a partire dall'hash di questa password.
+Dalla figura si evince che l’esecuzione di john ha permesso di determinare che la password di Mario è “ciaoBelli!1”. Questo significa che questa password era presente nel file pwdComuni.txt. K_mario è stata quindi ottenuta proprio a partire dall'hash di questa password.
 
 In conclusione, da questa parte della demo si è visto come un attaccante che non conosceva la password di un utente inserito nel dominio mynetwork.local ha ottenuto, in risposta dal DC, un messaggio criptato con la chiave di questo utente. L'attaccante dunque, montando un password cracking attack, ha potuto determinare la sua password. 
 
