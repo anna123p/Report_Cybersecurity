@@ -19,10 +19,10 @@ A tale scopo è stato creato il dominio "mynetwork.local" su una macchina virtua
 Per eseguire la demo verranno utilizzate 3 macchine virtuali (VM - Virtual Machine):
 - VM su cui ho installato Windows Server 2022. Questo nodo svolge il ruolo di Domain Controller (DC) per il dominio “mynetwork.local”, che è stato creato allo scopo di eseguire la demo. 
 - VM su cui ho installato Windows 10 for Workstations; fa parte del dominio che ho creato. È il nodo da cui un utente inserito nel dominio eseguirà interactive logon in questa demo. 
-- Kali linux è la macchina a disposizione dell’attaccante.
+- Kali linux è la VM a disposizione dell’attaccante.
 
 ### Presentazione del Dominio 
-Sulla VM con Windows Server 2022 è stato installato e configurato Windows Active Directory Domain Services[^1]. Inoltre ho installato e configurato i servizi DNS e DHCP. Utilizzando il DHCP ho assegnato indirizzi IP statici, all’interno di un range prefissato, ai nodi facenti parte dell’organizzazione. In particolare l’indirizzo IP del nodo su cui è presente il DC è 192.168.1.233; alla VM con Windows 10 è stato assegnato l’indirizzo IP 192.168.1.137. <br>
+Sulla VM con Windows Server 2022 è stato installato e configurato Windows Active Directory Domain Services. [^1] Inoltre ho installato e configurato i servizi DNS e DHCP. Utilizzando il DHCP ho assegnato indirizzi IP statici, all’interno di un range prefissato, ai nodi facenti parte dell’organizzazione. In particolare l’indirizzo IP del nodo su cui è presente il DC è 192.168.1.233; alla VM con Windows 10 è stato assegnato l’indirizzo IP 192.168.1.137. <br>
 Al dominio “mynetwork.local” appartengono vari utenti, alcuni dei quali fanno parte di gruppi. Di rilievo è, ad esempio, l’utente Mario, il cui account è stato configurato con “Do not require Kerberos preauthentication”. Questo assume particolare importanza per portare a termine il AS-REP roasting. Del dominio fanno parte anche altri utenti con pre authentication, uno dei quali eseguirà un interactive logon nella seconda parte della demo.
 
 
@@ -37,11 +37,11 @@ Il threat model che verrà adottato è il seguente. Si suppone che l’attaccant
 ## AS-REP roasting
 
 ### Contesto
-Questo tipo di attacco ha come presupposto il fatto che all’interno del dominio preso in considerazione ci sia almeno un utente il cui account è configurato con “Do not require Kerberos preauthentication”. L’attaccante, interrogando il DC, viene a conoscenza di quali siano gli utenti che hanno questo tipo di configurazione, il che significa che per contattare l’Authentication Service (AS), e ottenere un TGT (Ticket Granting Ticket), il loro AS-REQ non deve essere criptato con la chiave che deriva in maniera deterministica dal hash della loro password. Viene inviato un AS-REQ in chiaro al DC, il quale risponderà con un AS-REP che contiene, oltre al TGT per quell’utente, una parte di messaggio criptata con la chiave dell’utente. Ne consegue che la risposta del DC costituisce guessing material e permette di eseguire un password cracking attack[^2].
+Questo tipo di attacco ha come presupposto il fatto che all’interno del dominio preso in considerazione ci sia almeno un utente il cui account è configurato con “Do not require Kerberos preauthentication”. L’attaccante, interrogando il DC, viene a conoscenza di quali siano gli utenti che hanno questo tipo di configurazione, il che significa che per contattare l’Authentication Service (AS), e ottenere un TGT (Ticket Granting Ticket), il loro AS-REQ non deve essere criptato con la chiave che deriva in maniera deterministica dal hash della loro password. Viene inviato un AS-REQ in chiaro al DC, il quale risponderà con un AS-REP che contiene, oltre al TGT per quell’utente, una parte di messaggio criptata con la chiave dell’utente. Ne consegue che la risposta del DC costituisce guessing material e permette di eseguire un password cracking attack. [^2]
 
 
 ### Esecuzione dell’attacco
-In questa demo verrà utilizzato lo script python GetNPUsers[^3], che appartiene al toolkit Impacket (una raccolta di classi python per lavorare con i protocolli di rete). Tramite LDAP queries, GetNPUsers contatta il DC per verificare se gli username che passiamo in un file di testo corrispondono a utenti inseriti nel dominio considerato e, in particolare se, fra questi, qualcuno non richiede preauthentication. Una volta trovato un utente che soddisfi questi requisiti, lo script costruisce un AS-REQ a suo nome da inviare in chiaro al DC, il quale risponderà con un AS-REP contente il TGT e una parte di messaggio criptata nella chiave dell'utente.[^4] 
+In questa demo verrà utilizzato lo script python GetNPUsers,[^3] che appartiene al toolkit Impacket (una raccolta di classi python per lavorare con i protocolli di rete). Tramite LDAP queries, GetNPUsers contatta il DC per verificare se gli username che passiamo in un file di testo corrispondono a utenti inseriti nel dominio considerato e, in particolare se, fra questi, qualcuno non richiede preauthentication. Una volta trovato un utente che soddisfi questi requisiti, lo script costruisce un AS-REQ a suo nome da inviare in chiaro al DC, il quale risponderà con un AS-REP contente il TGT e una parte di messaggio criptata nella chiave dell'utente.[^4] 
 
 ![The Markdown Mark](images/impacket.png)
 _Figura 2: Esecuzione e risultato di GetNPUsers_
