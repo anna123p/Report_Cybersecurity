@@ -67,7 +67,7 @@ Il tool agirà nel modo seguente. Per ogni password (pwd) in pwdComuni.txt:
 - prova K_H(pwd) sul messaggio criptato e vede se è la chiave giusta, cioè se corrisponde a K_mario.
 
 ![The Markdown Mark](images/john.png)
-_Figura 2: Esecuzione di john the ripper_
+_Figura 2: Esecuzione di John the Ripper_
 
 Dalla figura si evince che l’esecuzione di john ha permesso di determinare che la password di Mario è “ciaoBelli!1”. Questo significa che questa password era presente nel file pwdComuni.txt. K_mario è stata quindi ottenuta proprio a partire dall'hash di questa password.
 
