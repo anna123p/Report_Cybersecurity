@@ -21,11 +21,7 @@ Per eseguire la demo verranno utilizzate 3 macchine virtuali (VM - Virtual Machi
 
 ### Presentazione del Dominio 
 Sulla VM con Windows Server 2022 è stato installato e configurato Windows Active Directory Domain Services. Inoltre ho installato e configurato i servizi DNS e DHCP. Utilizzando il DHCP ho assegnato indirizzi IP statici, all’interno di un range prefissato, ai nodi facenti parte dell’organizzazione. In particolare l’indirizzo IP del nodo su cui è presente il DC è 192.168.1.233; alla VM con Windows 10 è stato assegnato l’indirizzo IP 192.168.1.137. <br>
-Al dominio “mynetwork.local” appartengono vari utenti, alcuni dei quali fanno parte di gruppi. Di rilievo è, ad esempio, l’utente Mario, il cui account è stato configurato con “Do not require Kerberos preauthentication”, come si evince dalla figura riportata. Questo assume particolare importanza per portare a termine il AS-REP roasting. 
-
-<img src="images/Mario.png" alt="Account di Mario" width="500"> _Figura 1: Account di Mario, non richiede preauthentication_
-
-Del dominio fanno parte anche altri utenti con pre authentication, uno dei quali eseguirà un interactive logon nella seconda parte della demo.
+Al dominio “mynetwork.local” appartengono vari utenti, alcuni dei quali fanno parte di gruppi. Di rilievo è, ad esempio, l’utente Mario, il cui account è stato configurato con “Do not require Kerberos preauthentication”. Questo assume particolare importanza per portare a termine il AS-REP roasting. Del dominio fanno parte anche altri utenti con pre authentication, uno dei quali eseguirà un interactive logon nella seconda parte della demo.
 
 
 ### Threat Model
@@ -123,7 +119,7 @@ Analizzando più nel dettaglio l’AS-REQ, le informazioni rilevanti per montare
 - CNameString: lo username dell’utente che ha inviato l’AS-REQ, qui tecnico2;
 - realm: dominio di cui fa parte questo utente, qui MYNETWORK.
 
-questi sono tutti parametri che ci serviranno per costruire la stringa da passare al cracking tool (hashcat in questo caso) che verrà utilizzato per eseguire il password cracking. 
+Questi sono tutti parametri che ci serviranno per costruire la stringa da passare al cracking tool (hashcat in questo caso) che verrà utilizzato per eseguire il password cracking. 
 
 <img src="images/AS-REQ.png" alt="AS-REQ" width="600"> _Figura 7: AS-REQ nel dettaglio_ 
 
@@ -139,17 +135,17 @@ Per costruire la stringa da passare a hashcat si possono consultare degli esempi
 La figura seguente illustra l'esecuzione di hashcat, in particolare è stato utilizzato il modulo 19900 a cui è stata passata la stringa nel formato descritto.
 
 ![The Markdown Mark](images/hashcat.png)
-_Figura 8: Esecuzione di hashcat_ 
+_Figura 7: Esecuzione di hashcat_ 
 
 Inoltre hashcat si aspetta un file di testo contenente alcune password, qui indicato con pwdComuni.txt. Il tool, utilizzando i parametri specificati relativamente a formato e tipo di crittografia, calcola l’hash per ogni password presente nella lista, da questo ottiene la chiave e vede se è corretta per il messaggio intercettato. Se l’operazione va a buon fine, cioè se la password di “tecnico2” è presente nell’elenco passato, hashcat restituisce la password dell’utente. In tal caso la chiave utilizzata per criptare il messaggio che abbiamo intercettato è stata ottenuta a partire dall'hash della password di "tecnico2". 
 
 La seguente figura mostra l'esito dell'esecuzione di hashcat. In questo caso il tool ha determinato che la password di "tecnico2" è "ciaoGrazie!1".
 
 ![The Markdown Mark](images/resHashcat.png)
-_Figura 7: Risultato dell'esecuzione di hashcat_ 
+_Figura 8: Risultato dell'esecuzione di hashcat_ 
 
 
-
+In conclusione, in questa parte della demo si è visto come un attaccante in grado di intercettare i pacchetti scambiati fra la macchina che funge da DC e una workstation può montare un offline guessing attack per trovare la password di un utente, che abbia inserito le proprie credenziali su quella workstation, a partire dal suo AS-REQ. 
 
 
 
