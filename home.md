@@ -41,7 +41,7 @@ Questo tipo di attacco ha come presupposto il fatto che all’interno del domini
 
 
 ### Esecuzione dell’attacco
-In questa demo verrà utilizzato lo script python GetNPUsers[^3], che appartiene al toolkit Impacket (una raccolta di classi python per lavorare con i protocolli di rete). Tramite LDAP queries, GetNPUsers contatta il DC per verificare se gli username che passiamo in un file di testo corrispondono a utenti inseriti nel dominio considerato e, in particolare se, fra questi, qualcuno non richiede preauthentication. Una volta trovato un utente che soddisfi questi requisiti, lo script costruisce un AS-REQ a suo nome da inviare in chiaro al DC, il quale risponderà con un AS-REP contente il TGT e una parte di messaggio criptata nella chiave dell'utente[^4] . 
+In questa demo verrà utilizzato lo script python GetNPUsers[^3], che appartiene al toolkit Impacket (una raccolta di classi python per lavorare con i protocolli di rete). Tramite LDAP queries, GetNPUsers contatta il DC per verificare se gli username che passiamo in un file di testo corrispondono a utenti inseriti nel dominio considerato e, in particolare se, fra questi, qualcuno non richiede preauthentication. Una volta trovato un utente che soddisfi questi requisiti, lo script costruisce un AS-REQ a suo nome da inviare in chiaro al DC, il quale risponderà con un AS-REP contente il TGT e una parte di messaggio criptata nella chiave dell'utente.[^4] 
 
 ![The Markdown Mark](images/impacket.png)
 _Figura 2: Esecuzione e risultato di GetNPUsers_
