@@ -150,6 +150,9 @@ _Figura 8: Risultato dell'esecuzione di hashcat_
 In conclusione, in questa parte della demo si è visto come un attaccante in grado di intercettare i pacchetti scambiati fra la macchina che funge da DC e una workstation può montare un offline guessing attack per trovare la password di un utente, che abbia inserito le proprie credenziali su quella workstation, a partire dal suo AS-REQ. 
 
 
+&nbsp;
+
+
 ## Bibliografia
 [^1]: Installare e Configurare Active Directory: https://www.youtube.com/watch?v=0cXUr7b6KgI
 
