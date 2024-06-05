@@ -59,7 +59,7 @@ Dalla figura si vede che:
 Analizziamo meglio la risposta del DC: "krb5asrep" è il formato con cui vengono rappresentati i dati di un AS-REP del protocollo Kerberos. "23" indica che il tipo di crittografia utilizzata è RC4-HMAC. Questo è interessante perché indica che GetNPUsers ha richiesto al DC che l'AS-REP venisse criptato utilizzando RC4, un algoritmo di crittografia più rapido rispetto ad AES (algoritmo usato di default in kerberos). Grazie a questo, il cracking tool che useremo richiederà meno tempo per portare a termine il password cracking e quindi determinare la password dell'utente Mario. <br>
 In quanto segue indicheremo, per compattezza di notazione, K_mario come la chiave dell'utente Mario.
 
-Per eseguire il password cracking utilizziamo john the ripper (john)^[5]. La stringa ottenuta in riposta dal DC verrà salvata in un file di testo, denominato hash.asrep1. Quindi verrà lanciato john, a cui passiamo:
+Per eseguire il password cracking utilizziamo John the Ripper (john). [^5] La stringa ottenuta in riposta dal DC verrà salvata in un file di testo, denominato hash.asrep1. Quindi verrà lanciato john, a cui passiamo:
 - un file di testo contenente ipotetiche password, qui denominato pwdComunit.txt;
 - krb5asrep: il formato con cui calcolare l’hash (poi dal hash si ottiene la chiave); 
 - il file contente AS-REP criptato con K_mario, qui hash.asrep1.
