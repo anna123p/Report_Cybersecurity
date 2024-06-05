@@ -58,28 +58,25 @@ Dalla figura si vede che:
 - l'utente Giulio fa parte del dominio MYNETWORK e richiede preauthentication: per questo utente lo script non ha costruito un AS-REQ;
 - l’utente Mario, appartenente al dominio MYNETWORK, non richiede preauthentication. Per lui è stato inviato un AS-REQ e in figura si vede la risposta del DC.
  
-Analizziamo meglio la risposta del DC: "krb5asrep" indica che quanto segue è la parte crittografata di un AS-REP del protocollo Kerberos. "23" indica che il tipo di crittografia utilizzata è RC4-HMAC. Questo è interessante perché indica che GetNPUsers ha richiesto al DC che l'AS-REP venisse criptato utilizzando RC4, un algoritmo di crittografia più lento rispetto ad AES (algoritmo usato di default in kerberos). Grazie a questo, il cracking tool che useremo richiederà meno tempo per portare a termine il password cracking e quindi determinare la password dell'utente Mario. <br>
+Analizziamo meglio la risposta del DC: "krb5asrep" è il formato con cui vengono rappresentati i dati di un AS-REP del protocollo Kerberos. "23" indica che il tipo di crittografia utilizzata è RC4-HMAC. Questo è interessante perché indica che GetNPUsers ha richiesto al DC che l'AS-REP venisse criptato utilizzando RC4, un algoritmo di crittografia più lento rispetto ad AES (algoritmo usato di default in kerberos). Grazie a questo, il cracking tool che useremo richiederà meno tempo per portare a termine il password cracking e quindi determinare la password dell'utente Mario. <br>
 In quanto segue indicheremo, per compattezza di notazione, K_mario come la chiave dell'utente Mario.
 
-Per eseguire il password cracking e determinare la password di Mario utilizziamo john the ripper (john). La stringa ottenuta in riposta dal DC verrà salvata in un file di testo, denominato hash.asrep1. Quindi verrà lanciato john, a cui passiamo:
+Per eseguire il password cracking utilizziamo john the ripper (john). La stringa ottenuta in riposta dal DC verrà salvata in un file di testo, denominato hash.asrep1. Quindi verrà lanciato john, a cui passiamo:
 - un file di testo contenente ipotetiche password, qui denominato pwdComunit.txt;
-- krb5asrep: il formato con cui calcolare l’hash; dal hash si trova la chiave. 
-il documento contente il AS-REP criptato, che abbiamo chiamato hash.asrep1
-john prenderà le password contenute nel file pwdComuni, usando i parametri specificati, relativi al formato e al tipo di crittografia, calcola l’hash di ogni password, da questa ricava la chiave e vede se è corretta per l’AS-REP criptato che gli abbiamo fornito. 
+- krb5asrep: il formato con cui calcolare l’hash (poi dal hash si ottiene la chiave); 
+- il file contente AS-REP criptato con K_mario, qui hash.asrep1
 
-
-&nbsp;
+Il tool agirà nel modo seguente. Per ogni password (pwd) in pwdComuni.txt:
+- calcola l’hash di ogni password ( H(pwd) ) usando i parametri specificati, relativi al formato e al tipo di crittografia;
+- da H(pwd) ricava K_H(pwd);
+- prova K_H(pwd) sul messaggio criptato e vede se è la chiave giusta, cioè se corrisponde a K_mario.
 
 ![The Markdown Mark](images/john.png)
 _Figura 3: Esecuzione di john the ripper_
 
-&nbsp;
+Dalla figura si evince che l’esecuzione di john ha permesso di determinare che la password di Mario è “ciaoBelli!1”. Questo significa che questa password era presente nel file pwdComuni.txt che è stato passato al tool. K_mario è stata quindi ottenuta proprio a partire dall'hash di questa password.
 
-
-Dalla figura si evince che l’esecuzione di john ha permesso di determinare che la password di Mario è “ciaoBelli!1”. Questo significa che questa password era presente nel file pwdComuni.txt che è stato passato al tool. 
-
-
-Ne consegue che un attaccante che non conosceva la password di un utente ha ottenuto in risposta dal DC un messaggio criptato con la chiave di questo utente. L'attaccante dunque, montando un password cracking attack, può determinare la password di questo utente. 
+In conclusione, da questa parte della demo si è visto come un attaccante che non conosceva la password di un utente inserito nel dominio mynetwork.local ha ottenuto, in risposta dal DC, un messaggio criptato con la chiave di questo utente. L'attaccante dunque, montando un password cracking attack, ha potuto determinare la sua password. 
 
 
 &nbsp;
@@ -87,88 +84,73 @@ Ne consegue che un attaccante che non conosceva la password di un utente ha otte
 ## Network Sniffing di AS-REQ + Password Cracking
 
 ### Contesto
-Nell’ambito dell’autenticazione di un utente con il protocollo Kerberos, la workstation su cui un utente si vuole autenticare ed il nodo su cui è presente il domain controller si scambiano dei pacchetti volti a verificare se l’utente può essere autenticato su quella workstation. In particolare il primo messaggio inviato dalla workstation viene denominato AS-REQ, ovvero Authentication Service Request ed è criptato con la chiave dell’utente. 
+Nell’ambito dell’autenticazione di un utente con il protocollo Kerberos, la workstation su cui l'utente ha inserito le credenziali scambia dei pacchetti con il nodo su cui è presente il DC con il protocollo Kerberos; tale scambio è volto a consentire o negare l'autenticazione di tale utente. In particolare il primo messaggio inviato dalla workstation viene denominato AS-REQ (Authentication Service Request) ed è criptato con la chiave dell’utente. <br>
 L’obiettivo di questa parte di demo è intercettare l’AS-REQ di un utente inserito nel dominio mynetwork.local e montare un attacco di tipo password cracking per risalire alla password di tale utente. 
 
 ## Esecuzione dell’Attacco 
-L’idea è quella di intercettare lo scambio di pacchetti fra il nodo su cui un utente si autenticherà e il nodo su cui è presente il DC. Per farlo occorre diventare Man In The Middle (MITM). Questo perché le macchine virtuali sono configurate per quanto riguarda la rete con “Internal Network”, quindi la rete viene gestita da uno “switch virtuale” e gli switch in generale utilizzano le tabelle di indirizzi MAC e lavorano inviando pacchetti solo alla porta che corrisponde all'indirizzo MAC del destinatario. Ne consegue che l’attaccante, restando all’esterno della comunicazione non riesce a vedere i pacchetti scambiati fra due nodi. Pertanto l’attaccante deve fare in modo che il traffico passi attraverso di lui. Ne deriva l’esigenza di diventare MITM. In questa demo l’attaccante diventerà MITM utilizzando ettercap, un tool di kali che permette di eseguire un ARP spoofing, quindi di diventare MITM a livello Ethernet. 
-L’idea alla base del funzionamento di questo tool e dell’ARP spoofing è inviare messaggi ARP spoofed, cioè falsi, in modo che quando un nodo deve comunicare con il DC, l’attaccante ha associato il proprio indirizzo MAC all’indirizzo IP del nodo su cui è presente il DC quindi i pacchetti destinati a quest ultimo arrivano al nodo su cui sta l’attaccante; analogamente l’attaccante invia dei messaggi ARP spoofed per associare il proprio indirizzo MAC all’indirizzo IP del nodo su cui l’utente si sta autenticando, in modo che  quando il DC deve parlare con quel nodo,  il traffico passi attraverso l’attaccante.
-È interessante osservare che qui torna utile l’ipotesi che l’attaccante conosca l’indirizzo IP del nodo su cui si trova il DC e il range degli indirizzi IP assegnati ai nodi dell’organizzazione. 
+L’idea è quella di intercettare lo scambio di pacchetti fra il nodo su cui un utente si autenticherà e il nodo su cui è presente il DC. Per farlo occorre diventare Man In The Middle (MITM). Questo perché le macchine virtuali sono configurate per quanto riguarda la rete con “Internal Network” quindi la rete viene gestita da uno “switch virtuale” e gli switch utilizzano le tabelle di indirizzi MAC e lavorano inviando pacchetti solo alla porta che corrisponde all'indirizzo MAC del destinatario. Ne consegue che l’attaccante, restando all’esterno della comunicazione non riesce a vedere i pacchetti scambiati fra due nodi. Pertanto l’attaccante deve fare in modo che il traffico passi attraverso di lui. Ne deriva l’esigenza di diventare MITM. In questa demo l’attaccante diventerà MITM utilizzando ettercap, un tool di kali che permette di eseguire un ARP spoofing, quindi di diventare MITM a livello Ethernet. 
+L’idea alla base del funzionamento di questo tool e dell’ARP spoofing è inviare messaggi ARP spoofed, cioè falsi, in modo che quando un nodo deve comunicare con il DC, l’attaccante ha associato il proprio indirizzo MAC all’indirizzo IP del nodo su cui è presente il DC quindi i pacchetti destinati a quest ultimo arrivano al nodo su cui sta l’attaccante; analogamente l’attaccante invia dei messaggi ARP spoofed per associare il proprio indirizzo MAC all’indirizzo IP del nodo su cui l’utente si sta autenticando, in modo che quando il DC deve parlare con quel nodo, il traffico passi attraverso l’attaccante.
+
+La figura seguente illustra l’esecuzione di ettercap. Il presupposto è quello di conoscere l’indirizzo IP del nodo su cui sta il DC (qui 192.168.1.233) e di scegliere l’indirizzo IP di un nodo all’interno del range di indirizzi IP noti, il che rientra nel threat model adottato. A questo punto l'attaccante è in grado di intercettare il traffico fra questi due nodi. In particolare è interessante osservare i veri indirizzi MAC delle due macchine.
 
 &nbsp;
 
-![The Markdown Mark](images/ettercap.png)
-_Figura 4: Esecuzione di ettercap_
-
-&nbsp;
-
-
-La figura rappresenta l’esecuzione di ettercap al fine di diventare MITM a livello Ethernet. Il presupposto è quello di conoscere l’indirizzo IP del nodo su cui sta il DC (qui 192.168.1.233) e di scegliere l’indirizzo IP di un nodo all’interno del range di indirizzi IP noti. L’attaccante intercetta il traffico fra questi due nodi e auspicabilmente un utente si collegherà al DC da quel nodo in particolare; se così non dovesse essere l’attaccante può scegliere un altro indirizzo IP e riprovare. 
-
-In particolare è interessante osservare i veri indirizzi MAC delle due macchine.
-
+<img src="images/ettercap.png" alt="Esecuzione di ettercap" width="600"> _Figura 4: Esecuzione di ettercap_
 
 &nbsp;
 
 ![The Markdown Mark](images/ARP.png)
-_Figura 5: Pacchetti ARP_ 
+_Figura 5: Pacchetti ARP che permettono all'attaccante di diventare MITM a livello Ethernet_ 
 
-&nbsp;
+Da questo estratto di wireshark si coglie lo scambio di pacchetti ARP che ha permesso all’attaccante di associare il proprio indirizzo MAC (quello di kali, che è la macchina da cui l’attaccante opera) agli indirizzi IP dei due nodi. In particolare:
+- 192.168.1.137 è l’indirizzo IP della macchina Windows 10;  
+- 192.168.1.233 è l’indirizzo IP del nodo su cui è presente il domain controller.
 
-192.168.1.137 è l’indirizzo IP della macchina Windows 10;  
-192.168.1.233 è l’indirizzo IP del nodo su cui è presente il domain controller. 
-Questa figura illustra lo scambio di pacchetti ARP che ha permesso all’attaccante di associare il proprio indirizzo MAC (quello di kali, che è la macchina da cui l’attaccante opera) ai due nodi: ne consegue che qualunque messaggio indirizzato a 192.168.1.137 verrà inviato a kali; analogamente qualunque messaggio indirizzato a 192.168.1.233 arriverà a kali.
+Ne consegue che qualunque messaggio indirizzato a 192.168.1.137 verrà inviato a kali; analogamente qualunque messaggio indirizzato a 192.168.1.233 arriverà a kali.
 
-Ora l’attaccante è diventato MITM fra il nodo su cui sta il DC e un nodo in particolare dell’organizzazione (cioè 192.168.1.137 ). Supponiamo ora che, su quel nodo, ci sia un utente (con pre authentication) che esegue un interactive logon. L’attaccante riesce ad intercettare lo scambio di pacchetti fra la workstation e il DC. Per farlo utilizzeremo wireshark, l’interfaccia di rete che intercettiamo è eth0, filtriamo utilizzando il protocollo kerberos, che è quello a cui siamo interessati.
-
-&nbsp;
+Ora l’attaccante è diventato MITM fra il nodo su cui sta il DC e un nodo in particolare dell’organizzazione. Supponiamo ora che, su quella macchina, ci sia un utente (con pre authentication) che esegue un interactive logon. L’attaccante riesce ad intercettare lo scambio di pacchetti fra la workstation e il DC. Per farlo utilizzeremo wireshark, l’interfaccia di rete che intercettiamo è eth0, filtriamo utilizzando il protocollo kerberos, che è quello a cui siamo interessati.
 
 ![The Markdown Mark](images/wireshark.png)
-_Figura 6: Wireshark_
-
-&nbsp;
+_Figura 6: Scambio di pacchetti intercettato con Wireshark_
 
 
-In particolare, il messaggio a cui siamo interessati è AS-REQ, che, come indicato dalla figura, è il pacchetto che la workstation invia alla macchina con il DC. L’obiettivo di questa parte di demo è fare un offline guessing attack per ricavare la password dell’utente, del quale abbiamo intercettato l’AS-REQ.
+In particolare, il messaggio a cui siamo interessati è AS-REQ, che, come indicato dalla figura, è il pacchetto che la workstation invia al DC. <br>
+L’obiettivo ora è fare un offline guessing attack per ricavare la password dell’utente, del quale abbiamo intercettato l’AS-REQ.
 
 Analizzando più nel dettaglio l’AS-REQ, le informazioni rilevanti per montare l’attacco sono: 
-etype: il tipo di crittografia utilizzata, qui 18
-cipher: il valore criptato
-CNameString: lo username dell’utente che ha inviato l’AS-REQ
-realm: dominio di cui fa parte questo utente
-questi sono tutti parametri che ci serviranno per costruire la stringa da passare a hashcat che è il tool che verrà utilizzato per eseguire il password cracking. 
+- etype: il tipo di crittografia utilizzata, qui 18 quindi AES;
+- cipher: il valore criptato con la chiave dell'utente;
+- CNameString: lo username dell’utente che ha inviato l’AS-REQ, qui tecnico2;
+- realm: dominio di cui fa parte questo utente, qui MYNETWORK.
+
+questi sono tutti parametri che ci serviranno per costruire la stringa da passare al cracking tool (hashcat in questo caso) che verrà utilizzato per eseguire il password cracking. 
+
+<img src="images/AS-REQ.png" alt="AS-REQ" width="600"> _Figura 7: AS-REQ nel dettaglio_ 
 
 &nbsp;
 
-![The Markdown Mark](images/AS-REQ.png)
-_Figura 7: AS-REQ nel dettaglio_ 
 
-&nbsp;
+Per costruire la stringa da passare a hashcat si possono consultare degli esempi online^[], in particolare andranno inseriti:
+- il formato con cui calcolare l’hash, qui krb5pa. Dall’hash si risale alla chiave; 
+- il tipo di crittografia utilizzata per generare il valore “cipher”, qui 18;
+- username dell’utente di cui abbiamo intercettato AS-REQ, qui tecnico2;
+- dominio di cui l’utente fa parte, qui MYNETWORK.LOCAL.
 
-
-Per costruire la stringa da passare a hashcat si possono consultare degli esempi online, in particolare il formato corretto è quello indicato in figura: 
-
-&nbsp;
+La figura seguente illustra l'esecuzione di hashcat, in particolare è stato utilizzato il modulo 19900 a cui è stata passata la stringa nel formato descritto.
 
 ![The Markdown Mark](images/hashcat.png)
 _Figura 8: Esecuzione di hashcat_ 
 
-&nbsp;
+Inoltre hashcat si aspetta un file di testo contenente alcune password, qui indicato con pwdComuni.txt. Il tool, utilizzando i parametri specificati relativamente a formato e tipo di crittografia, calcola l’hash per ogni password presente nella lista, da questo ottiene la chiave e vede se è corretta per il messaggio intercettato. Se l’operazione va a buon fine, cioè se la password di “tecnico2” è presente nell’elenco passato, hashcat restituisce la password dell’utente. In tal caso la chiave utilizzata per criptare il messaggio che abbiamo intercettato è stata ottenuta a partire dall'hash della password di "tecnico2". 
 
-
-dove:
-krb5pa è il formato con cui calcolare l’hash. Dall’hash, in maniera deterministica, si risale alla chiave 
-18 è il tipo di crittografia utilizzata per generare il valore “cipher”
-tecnico2 è lo username dell’utente di cui abbiamo intercettato AS-REQ
-MYNETWORK.LOCAL è il dominio di cui l’utente fa parte
-
-hashcat si aspetta anche un file di testo contenente alcune password, qui indicato con pwdComuni.txt. Il tool, utilizzando i parametri specificati relativamente a formato e tipo di crittografia, calcola l’hash per ogni password presente nella lista, da questo calcola la chiave e vede se è corretta per il messaggio intercettato. Se l’operazione va a buon fine, cioè se la chiave di “tecnico2” è presente nell’elenco passato, hashcat restituisce la password dell’utente, come si evince dalla figura seguente. 
-
-
-&nbsp;
+La seguente figura mostra l'esito dell'esecuzione di hashcat. In questo caso il tool ha determinato che la password di "tecnico2" è "ciaoGrazie!1".
 
 ![The Markdown Mark](images/resHashcat.png)
 _Figura 7: Risultato dell'esecuzione di hashcat_ 
 
-&nbsp;
+
+
+
+
+
 
