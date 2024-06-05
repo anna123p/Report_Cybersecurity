@@ -109,7 +109,7 @@ Ne consegue che qualunque messaggio indirizzato a 192.168.1.137 verrà inviato a
 Ora l’attaccante è diventato MITM fra il nodo su cui sta il DC e un nodo in particolare dell’organizzazione. Supponiamo ora che, su quella macchina, ci sia un utente (con pre authentication) che esegue un interactive logon. L’attaccante riesce ad intercettare lo scambio di pacchetti fra la workstation e il DC. Per vedere i pacchetti scambiati utilizzeremo wireshark, l’interfaccia di rete che intercettiamo è eth0, filtriamo utilizzando il protocollo kerberos, che è quello a cui siamo interessati.
 
 ![The Markdown Mark](images/wireshark.png)
-_Figura 5: Scambio di pacchetti intercettato con Wireshark_
+_Figura 5: Scambio dei pacchetti intercettati, visualizzato con Wireshark_
 
 
 In particolare, il messaggio a cui siamo interessati è AS-REQ, che, come indicato dalla figura, è il pacchetto che la workstation invia al DC. <br>
