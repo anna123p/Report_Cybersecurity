@@ -91,9 +91,8 @@ L’idea alla base del funzionamento di questo tool e dell’ARP spoofing è inv
 
 La figura seguente illustra l’esecuzione di ettercap. Il presupposto è quello di conoscere l’indirizzo IP del nodo su cui sta il DC (qui 192.168.1.233) e di scegliere l’indirizzo IP di un nodo all’interno del range di indirizzi IP noti, il che rientra nel threat model adottato. A questo punto l'attaccante è in grado di intercettare il traffico fra questi due nodi. In particolare è interessante osservare i veri indirizzi MAC delle due macchine.
 
-&nbsp;
+<img src="images/ettercap1.png" alt="ettercap" width="600"> <img src="images/ettercap2.png" alt="ettercap" width="600"> _Figura 3: Esecuzione di ettercap_
 
-<img src="images/ettercap.png" alt="Esecuzione di ettercap" width="600"> _Figura 3: Esecuzione di ettercap_
 
 &nbsp;
 
@@ -102,7 +101,8 @@ _Figura 4: Pacchetti ARP che permettono all'attaccante di diventare MITM a livel
 
 Da questo estratto di wireshark si coglie lo scambio di pacchetti ARP che ha permesso all’attaccante di associare il proprio indirizzo MAC (quello di kali, che è la macchina da cui l’attaccante opera) agli indirizzi IP dei due nodi. In particolare:
 - 192.168.1.137 è l’indirizzo IP della macchina con Windows 10;  
-- 192.168.1.233 è l’indirizzo IP del nodo su cui è presente il DC.
+- 192.168.1.233 è l’indirizzo IP del nodo su cui è presente il DC;
+- 08:00:27:04:D7:C3 è l'indirizzo MAC di kali. 
 
 Ne consegue che qualunque messaggio indirizzato a 192.168.1.137 verrà inviato a kali; analogamente qualunque messaggio indirizzato a 192.168.1.233 arriverà a kali.
 
