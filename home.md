@@ -22,7 +22,7 @@ Per eseguire la demo verranno utilizzate 3 macchine virtuali (VM - Virtual Machi
 - Kali linux è la macchina a disposizione dell’attaccante.
 
 ### Presentazione del Dominio 
-Sulla VM con Windows Server 2022 è stato installato e configurato Windows Active Directory Domain Services. Inoltre ho installato e configurato i servizi DNS e DHCP. Utilizzando il DHCP ho assegnato indirizzi IP statici, all’interno di un range prefissato, ai nodi facenti parte dell’organizzazione. In particolare l’indirizzo IP del nodo su cui è presente il DC è 192.168.1.233; alla VM con Windows 10 è stato assegnato l’indirizzo IP 192.168.1.137. <br>
+Sulla VM con Windows Server 2022 è stato installato e configurato Windows Active Directory Domain Services[^1]. Inoltre ho installato e configurato i servizi DNS e DHCP. Utilizzando il DHCP ho assegnato indirizzi IP statici, all’interno di un range prefissato, ai nodi facenti parte dell’organizzazione. In particolare l’indirizzo IP del nodo su cui è presente il DC è 192.168.1.233; alla VM con Windows 10 è stato assegnato l’indirizzo IP 192.168.1.137. <br>
 Al dominio “mynetwork.local” appartengono vari utenti, alcuni dei quali fanno parte di gruppi. Di rilievo è, ad esempio, l’utente Mario, il cui account è stato configurato con “Do not require Kerberos preauthentication”. Questo assume particolare importanza per portare a termine il AS-REP roasting. Del dominio fanno parte anche altri utenti con pre authentication, uno dei quali eseguirà un interactive logon nella seconda parte della demo.
 
 
@@ -37,11 +37,11 @@ Il threat model che verrà adottato è il seguente. Si suppone che l’attaccant
 ## AS-REP roasting
 
 ### Contesto
-Questo tipo di attacco ha come presupposto il fatto che all’interno del dominio preso in considerazione ci sia almeno un utente il cui account è configurato con “Do not require Kerberos preauthentication”. L’attaccante, interrogando il DC, viene a conoscenza di quali siano gli utenti che hanno questo tipo di configurazione, il che significa che per contattare l’Authentication Service (AS), e ottenere un TGT (Ticket Granting Ticket), il loro AS-REQ non deve essere criptato con la chiave che deriva in maniera deterministica dal hash della loro password. Viene inviato un AS-REQ in chiaro al DC, il quale risponderà con un AS-REP che contiene, oltre al TGT per quell’utente, una parte di messaggio criptata con la chiave dell’utente. Ne consegue che la risposta del DC costituisce guessing material e permette di eseguire un password cracking attack.
+Questo tipo di attacco ha come presupposto il fatto che all’interno del dominio preso in considerazione ci sia almeno un utente il cui account è configurato con “Do not require Kerberos preauthentication”. L’attaccante, interrogando il DC, viene a conoscenza di quali siano gli utenti che hanno questo tipo di configurazione, il che significa che per contattare l’Authentication Service (AS), e ottenere un TGT (Ticket Granting Ticket), il loro AS-REQ non deve essere criptato con la chiave che deriva in maniera deterministica dal hash della loro password. Viene inviato un AS-REQ in chiaro al DC, il quale risponderà con un AS-REP che contiene, oltre al TGT per quell’utente, una parte di messaggio criptata con la chiave dell’utente. Ne consegue che la risposta del DC costituisce guessing material e permette di eseguire un password cracking attack[^2].
 
 
 ### Esecuzione dell’attacco
-In questa demo verrà utilizzato lo script python GetNPUsers, che appartiene al toolkit Impacket (una raccolta di classi python per lavorare con i protocolli di rete). Tramite LDAP queries, GetNPUsers contatta il DC per verificare se gli username che passiamo in un file di testo corrispondono a utenti inseriti nel dominio considerato e, in particolare se, fra questi, qualcuno non richiede preauthentication. Una volta trovato un utente che soddisfi questi requisiti, lo script costruisce un AS-REQ a suo nome da inviare in chiaro al DC, il quale risponderà con un AS-REP contente il TGT e una parte di messaggio criptata nella chiave dell'utente. 
+In questa demo verrà utilizzato lo script python GetNPUsers[^3], che appartiene al toolkit Impacket (una raccolta di classi python per lavorare con i protocolli di rete). Tramite LDAP queries, GetNPUsers contatta il DC per verificare se gli username che passiamo in un file di testo corrispondono a utenti inseriti nel dominio considerato e, in particolare se, fra questi, qualcuno non richiede preauthentication. Una volta trovato un utente che soddisfi questi requisiti, lo script costruisce un AS-REQ a suo nome da inviare in chiaro al DC, il quale risponderà con un AS-REP contente il TGT e una parte di messaggio criptata nella chiave dell'utente[^4]. 
 
 ![The Markdown Mark](images/impacket.png)
 _Figura 2: Esecuzione e risultato di GetNPUsers_
@@ -62,7 +62,7 @@ In quanto segue indicheremo, per compattezza di notazione, K_mario come la chiav
 Per eseguire il password cracking utilizziamo john the ripper (john). La stringa ottenuta in riposta dal DC verrà salvata in un file di testo, denominato hash.asrep1. Quindi verrà lanciato john, a cui passiamo:
 - un file di testo contenente ipotetiche password, qui denominato pwdComunit.txt;
 - krb5asrep: il formato con cui calcolare l’hash (poi dal hash si ottiene la chiave); 
-- il file contente AS-REP criptato con K_mario, qui hash.asrep1
+- il file contente AS-REP criptato con K_mario, qui hash.asrep1.
 
 Il tool agirà nel modo seguente. Per ogni password (pwd) in pwdComuni.txt:
 - calcola l’hash, H(pwd), usando i parametri specificati, relativi al formato e al tipo di crittografia;
@@ -83,7 +83,7 @@ In conclusione, da questa parte della demo si è visto come un attaccante che no
 
 ### Contesto
 Nell’ambito dell’autenticazione di un utente con il protocollo Kerberos, la workstation su cui l'utente ha inserito le credenziali scambia dei pacchetti con il nodo su cui è presente il DC con il protocollo Kerberos; tale scambio è volto a consentire o negare l'autenticazione di tale utente. In particolare il primo messaggio inviato dalla workstation viene denominato AS-REQ (Authentication Service Request) ed è criptato con la chiave dell’utente. <br>
-L’obiettivo di questa parte di demo è intercettare l’AS-REQ di un utente inserito nel dominio mynetwork.local e montare un attacco di tipo password cracking per risalire alla password di tale utente. 
+L’obiettivo di questa parte di demo è intercettare l’AS-REQ di un utente inserito nel dominio mynetwork.local e montare un attacco di tipo password cracking per risalire alla password di tale utente^[5]. 
 
 ## Esecuzione dell’Attacco 
 L’idea è quella di intercettare lo scambio di pacchetti fra il nodo su cui un utente si autenticherà e il nodo su cui è presente il DC. Per farlo occorre diventare Man In The Middle (MITM). Questo perché le macchine virtuali sono configurate per quanto riguarda la rete con “Internal Network” quindi la rete viene gestita da uno “switch virtuale” e gli switch utilizzano le tabelle di indirizzi MAC e lavorano inviando pacchetti solo alla porta che corrisponde all'indirizzo MAC del destinatario. Ne consegue che l’attaccante, restando all’esterno della comunicazione non riesce a vedere i pacchetti scambiati fra due nodi. Pertanto l’attaccante deve fare in modo che il traffico passi attraverso di lui. Ne deriva l’esigenza di diventare MITM. In questa demo l’attaccante diventerà MITM utilizzando ettercap, un tool di kali che permette di eseguire un ARP spoofing, quindi di diventare MITM a livello Ethernet. 
@@ -128,7 +128,7 @@ Questi sono tutti parametri che ci serviranno per costruire la stringa da passar
 &nbsp;
 
 
-Per costruire la stringa da passare a hashcat si possono consultare degli esempi online^[], in particolare andranno inseriti:
+Per costruire la stringa da passare a hashcat si possono consultare degli esempi online[^6], in particolare andranno inseriti:
 - il formato con cui calcolare l’hash, qui krb5pa. Dall’hash si risale alla chiave; 
 - il tipo di crittografia utilizzata per generare il valore “cipher”, qui 18;
 - username dell’utente di cui abbiamo intercettato AS-REQ, qui tecnico2;
@@ -149,6 +149,14 @@ _Figura 8: Risultato dell'esecuzione di hashcat_
 
 In conclusione, in questa parte della demo si è visto come un attaccante in grado di intercettare i pacchetti scambiati fra la macchina che funge da DC e una workstation può montare un offline guessing attack per trovare la password di un utente, che abbia inserito le proprie credenziali su quella workstation, a partire dal suo AS-REQ. 
 
+
+## Bibliografia
+[^1] Installare e Configurare Active Directory: https://www.youtube.com/watch?v=0cXUr7b6KgI
+[^2] AS-REP roasting: https://www.youtube.com/watch?v=wA9w8t1fRWo
+[^3] GetNPUsers: https://forum.hackthebox.com/t/getnpusers-py-explained-video/2297 
+[^4] Codice GetNPUsers: https://github.com/fortra/impacket/blob/master/examples/GetNPUsers.py
+[^5] Ottenere pwd quando pre-auth è richiesto: https://www.youtube.com/watch?v=VLA7x81i5Pw
+[^6] Esempi hashcat: https://hashcat.net/wiki/doku.php?id=example_hashes
 
 
 
