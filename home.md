@@ -1,8 +1,10 @@
 # Attacchi a Kerberos: <br> AS-REP roasting e Network Sniffing di AS-REQ + Password Cracking
 
 Report per il corso di Cybersecurity [446MI], Università degli Studi di Trieste
+
 <div style="display: flex; justify-content: space-between;">
-    <div style="text-align: right;"> Anna Pascali, IN2000235  </div>
+    <div style="text-align: right;"> Anna Pascali, IN2000235 </div>
+    <div style="text-align: left;"> Trieste, 05.06.2024 </div>
 </div>
 
 
