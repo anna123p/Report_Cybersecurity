@@ -136,7 +136,7 @@ La figura seguente illustra l'esecuzione di hashcat, in particolare è stato uti
 ![The Markdown Mark](images/hashcat.png)
 _Figura 7: Esecuzione di hashcat_ 
 
-Inoltre hashcat si aspetta un file di testo contenente alcune password, qui indicato con pwdComuni.txt. Il tool, utilizzando i parametri specificati, calcola l’hash per ogni password presente nella lista, da questo ottiene la chiave e vede se è corretta per il messaggio intercettato. Se l’operazione va a buon fine hashcat restituisce la password dell’utente. In tal caso la chiave utilizzata per criptare il messaggio che abbiamo intercettato è stata ottenuta a partire dall'hash della password di "tecnico2". 
+Inoltre hashcat si aspetta un file di testo contenente alcune password, qui indicato con pwdComuni.txt. Il tool, utilizzando i parametri specificati, calcola l’hash per ogni password presente nella lista, da questo ottiene la chiave e vede se è corretta per il messaggio intercettato. Se l’operazione va a buon fine hashcat restituisce la password di "tecnico2". In tal caso la chiave utilizzata per criptare il messaggio che abbiamo intercettato è stata ottenuta a partire dall'hash della password di "tecnico2". 
 
 La seguente figura mostra l'esito dell'esecuzione di hashcat. In questo caso il tool ha determinato che la password di "tecnico2" è "ciaoGrazie!1".
 
