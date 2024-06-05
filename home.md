@@ -1,92 +1,69 @@
-# Attacchi a Kerberos: AS-REP roasting e Password Cracking di AS-REQ
-&nbsp;
+# Attacchi a Kerberos: <br> AS-REP roasting e Network Sniffing di AS-REQ + Password Cracking
 
-Report per il corso di Cybersecurity[446MI], Università degli Studi di Trieste
+Report per il corso di Cybersecurity [446MI], Università degli Studi di Trieste
 <div style="display: flex; justify-content: space-between;">
     <div style="text-align: right;"> Anna Pascali, IN2000235  </div>
 </div>
-
-&nbsp;
 
 
 ## Introduzione 
 Il presente elaborato è volto alla dimostrazione di un attacco a kerberos, in particolare verranno illustrati:
 - AS-REP roasting 
-- password cracking di AS-REQ (di un utente con preauthentication)
+- Network Sniffing di AS-REQ e Password Cracking (per un utente con preauthentication)
 
 A tale scopo è stato creato il dominio "mynetwork.local" su una macchina virtuale su cui è stato installato Windows Server 2022. 
 
-### Presentazione del Dominio 
-Su windows server 2022 è stato installato e configurato Windows Active Directory Domain Services, DNS e DHCP. Utilizzando il DHCP ho assegnato indirizzi IP statici, all’interno di un range prefissato, ai nodi facenti parte dell’organizzazione. In particolare l’indirizzo IP del nodo su cui è presente il DC è 192.168.1.233; alla macchina con Windows 10 è stato assegnato l’indirizzo IP 192.168.1.137. <br>
-Al dominio “mynetwork.local” appartengono vari utenti, alcuni dei quali fanno parte di gruppi. Di rilievo è, ad esempio, l’utente Mario, il cui account è stato configurato con “Do not require Kerberos preauthentication”. Questo assume particolare importanza per portare a termine il AS-REP roasting. Del dominio fanno parte anche altri utenti con pre authentication, uno dei quali eseguirà un interactive logon nella seconda parte della demo
-
-&nbsp;
-
-<img src="images/Mario.png" alt="Account di Mario" width="600">
-*Figura 1: Account di Mario*
-
-&nbsp;
-
-
 ### Macchine Virtuali utilizzate
-Per eseguire la demo verranno utilizzate 3 macchine virtuali:
-- Una macchina su cui ho installato Windows Server 2022. Questo nodo svolge il ruolo di Domain Controller (= DC) per il dominio “mynetwork.local”, che è stato creato allo scopo di eseguire la demo. 
-- Una macchina su cui ho installato Windows 10 for Workstations; fa parte del dominio che ho creato. È il nodo da cui un utente inserito nel dominio eseguirà interactive logon in questa demo. 
+Per eseguire la demo verranno utilizzate 3 macchine virtuali (VM - Virtual Machine):
+- VM su cui ho installato Windows Server 2022. Questo nodo svolge il ruolo di Domain Controller (DC) per il dominio “mynetwork.local”, che è stato creato allo scopo di eseguire la demo. 
+- VM su cui ho installato Windows 10 for Workstations; fa parte del dominio che ho creato. È il nodo da cui un utente inserito nel dominio eseguirà interactive logon in questa demo. 
 - Kali linux è la macchina a disposizione dell’attaccante.
+
+### Presentazione del Dominio 
+Sulla VM con Windows Server 2022 è stato installato e configurato Windows Active Directory Domain Services. Inoltre ho installato e configurato i servizi DNS e DHCP. Utilizzando il DHCP ho assegnato indirizzi IP statici, all’interno di un range prefissato, ai nodi facenti parte dell’organizzazione. In particolare l’indirizzo IP del nodo su cui è presente il DC è 192.168.1.233; alla VM con Windows 10 è stato assegnato l’indirizzo IP 192.168.1.137. <br>
+Al dominio “mynetwork.local” appartengono vari utenti, alcuni dei quali fanno parte di gruppi. Di rilievo è, ad esempio, l’utente Mario, il cui account è stato configurato con “Do not require Kerberos preauthentication”, come si evince dalla figura riportata. Questo assume particolare importanza per portare a termine il AS-REP roasting. 
+
+<img src="images/Mario.png" alt="Account di Mario" width="500"> _Figura 1: Account di Mario, non richiede preauthentication_
+
+Del dominio fanno parte anche altri utenti con pre authentication, uno dei quali eseguirà un interactive logon nella seconda parte della demo.
 
 
 ### Threat Model
-Il threat model che verrà adottato è il seguente. 
-Si suppone che l’attaccante:
+Il threat model che verrà adottato è il seguente. Si suppone che l’attaccante:
 - abbia informazioni sulla struttura di rete, quindi conosca l'indirizzo IP del nodo su cui è presente il Domain Controller (DC) e il range degli indirizzi IP assegnati ai nodi appartenenti al dominio; 
 - sia in grado di comunicare con le macchine del dominio, quindi possa aprire connessioni TCP con queste.
 
-
-### Tool 
-Breve panoramica dei tool utilizzati in questa demo. 
-- per AS-REP roasting:
-  -  GetNPUsers, che è uno script python incluso nel toolkit Impacket, una raccolta di classi python per lavorare con i protocolli di rete. Questo script verrà utilizzato per interrogare il DC su quali utenti non richiedono preauthentication e quindi chiedere un TGT a loro nome.
-  - john the ripper per eseguire offline guessing. A partire dall'AS-REP, questo tool permette di ottenere la password dell’utente a cui è intestato il TGT. 
-
-Quindi complessivamente grazie a questi due strumenti saremo in grado di venire a conoscenza di quali utenti non hanno preauthentication e una volta ottenuta la risposta del DC, criptata con la chiave che deriva dal hash della loro password, eseguire un password cracking ed ottenere di fatto la password di questi utenti. 
-
-- Password Cracking di AS-REQ:
-    - ettercap: permette di fare ARP spoofing, quindi diventare man in the middle a livello 2 del modello ISO/OSI.
-    - wireshark: strumento che permette di analizzare il traffico di rete.
-    - hashcat: permette di eseguire offline guessing
- 
-Grazie a questi strumenti siamo in grado di intercettare l'AS-REQ di un utente e montare un offline guessing attack per determinare la password di questo utente.
 
 &nbsp;
 
 ## AS-REP roasting
 
 ### Contesto
-Questo tipo di attacco ha come presupposto il fatto che all’interno del dominio preso in considerazione ci sia almeno un utente il cui account è configurato con “Do not require Kerberos preauthentication”. L’attaccante, interrogando il DC, viene a conoscenza di quali siano gli utenti che hanno questo tipo di configurazione, il che significa che per contattare l’AS, e ottenere un TGT, il loro AS-REQ non deve essere criptato con la chiave che deriva in maniera deterministica dal hash della loro password. Viene inviato un AS-REQ in chiaro e il DC risponderà con un AS-REP che contiene il TGT per quell’utente; la riposta del DC sarà criptata con la chiave dell’utente e costituisce guessing material per l’attaccante, che può eseguire un password cracking attack.
-Ne consegue che chiunque sia in grado di contattare il DC può chiedere un TGT a nome di un utente che non richiede pre authentication, senza dover conoscere la sua password. Chiaramente questo è vantaggioso per l’attaccante perché se è in grado di contattare il DC, tramite GetNPUsers, può fornirgli una lista di username di potenziali utenti senza pre authentication e, se nella lista è presente lo username di un utente il cui account è davvero configurato in questo modo, il DC risponderà con un TGT per quell’utente. Quindi l’attaccante, una volta ricevuta la riposta del DC, che sarà criptata nella chiave dell’utente, può montare un offline guessing attack per trovare la password di questo. 
+Questo tipo di attacco ha come presupposto il fatto che all’interno del dominio preso in considerazione ci sia almeno un utente il cui account è configurato con “Do not require Kerberos preauthentication”. L’attaccante, interrogando il DC, viene a conoscenza di quali siano gli utenti che hanno questo tipo di configurazione, il che significa che per contattare l’Authentication Service (AS), e ottenere un TGT (Ticket Granting Ticket), il loro AS-REQ non deve essere criptato con la chiave che deriva in maniera deterministica dal hash della loro password. Viene inviato un AS-REQ in chiaro al DC, il quale risponderà con un AS-REP che contiene, oltre al TGT per quell’utente, una parte di messaggio criptata con la chiave dell’utente. Ne consegue che la risposta del DC costituisce guessing material e permette di eseguire un password cracking attack.
+
 
 ### Esecuzione dell’attacco
-Per contattare il DC verrà utilizzato il comando Impacket-GetNPUsers. Per eseguire questo comando è necessario avere a disposizione un file di testo, in figura denominato names.txt, che contenga un elenco di potenziali username del dominio. L’idea è che lo script GetNPUsers chiederà al DC se gli username presenti nel file di testo hanno “Do not require Kerberos preauthentication” abilitato; in caso di risposta affermativa, il DC risponderà inviando un TGT a nome di questi utenti. Oltre al TGT, l’AS-REP contiene una parte criptata con la chiave dell’utente e questa verrà utilizzata per portare a termine il password cracking.
-In figura si vede che l’utente Mario, appartenente al dominio MYNETWORK non richiede preauthentication. In particolare: 
-krb5asrep indica che quanto segue è la parte crittografata di un AS-REP del protocollo Kerberos. Questo verrà utilizzato da john the ripper per sapere con quale formato calcolare l’hash delle password che gli passeremo, dall’hash poi in maniera deterministica si può ottenere la chiave.
-23 indica che il tipo di crittografia utilizzata è RC4-HMAC.
-ciò che segue “ : ” è la risposta del DC, criptata con la chiave di Mario
-
-&nbsp;
+In questa demo verrà utilizzato lo script python GetNPUsers, che appartiene al toolkit Impacket (una raccolta di classi python per lavorare con i protocolli di rete). Tramite LDAP queries, GetNPUsers contatta il DC per verificare se gli username che passiamo in un file di testo corrispondono a utenti inseriti nel dominio considerato e, in particolare se, fra questi, qualcuno non richiede preauthentication. Una volta trovato un utente che soddisfi questi requisiti, lo script costruisce un AS-REQ a suo nome da inviare in chiaro al DC, il quale risponderà con un AS-REP contente il TGT e una parte di messaggio criptata nella chiave dell'utente. 
 
 ![The Markdown Mark](images/impacket.png)
-_Figura 2: Esecuzione di GetNPUsers_
+_Figura 2: Esecuzione e risultato di GetNPUsers_
 
-&nbsp;
+Per eseguire questo comando è necessario:
+- avere a disposizione un file di testo, in figura denominato names.txt, che contenga un elenco di potenziali username del dominio;
+- scegliere un dominio, in figura indicato con MYNETWORK;
+- conoscere l'indirizzo IP del nodo su cui è presente il DC, qui 192.168.1.233. Questo è reso possibile dal threat model adottato.
 
+Dalla figura si vede che:
+- molti degli utenti presenti in names.txt non fanno parte del dominio MYNETWORK;
+- l'utente Giulio fa parte del dominio MYNETWORK e richiede preauthentication: per questo utente lo script non ha costruito un AS-REQ;
+- l’utente Mario, appartenente al dominio MYNETWORK, non richiede preauthentication. Per lui è stato inviato un AS-REQ e in figura si vede la risposta del DC.
+ 
+Analizziamo meglio la risposta del DC: "krb5asrep" indica che quanto segue è la parte crittografata di un AS-REP del protocollo Kerberos. "23" indica che il tipo di crittografia utilizzata è RC4-HMAC. Questo è interessante perché indica che GetNPUsers ha richiesto al DC che l'AS-REP venisse criptato utilizzando RC4, un algoritmo di crittografia più lento rispetto ad AES (algoritmo usato di default in kerberos). Grazie a questo, il cracking tool che useremo richiederà meno tempo per portare a termine il password cracking e quindi determinare la password dell'utente Mario. <br>
+In quanto segue indicheremo, per compattezza di notazione, K_mario come la chiave dell'utente Mario.
 
-Dalla figura inoltre si osserva che nel file names.txt erano presenti molti username che non corrispondono ad utenti registrati nel dominio; Giulio è uno username del dominio che richiede preauthentication.
-La stringa ottenuta in riposta dal DC verrà salvata in un file di testo, denominato hash.asrep1 per chiarezza. 
-
-
-Quindi verrà lanciato john the ripper, a cui vanno passati:
-un file contenente ipotetiche password, qui denominato pwdComunit.txt
-krb5asrep: il formato con cui calcolare l’hash; dal hash si trova la chiave. 
+Per eseguire il password cracking e determinare la password di Mario utilizziamo john the ripper (john). La stringa ottenuta in riposta dal DC verrà salvata in un file di testo, denominato hash.asrep1. Quindi verrà lanciato john, a cui passiamo:
+- un file di testo contenente ipotetiche password, qui denominato pwdComunit.txt;
+- krb5asrep: il formato con cui calcolare l’hash; dal hash si trova la chiave. 
 il documento contente il AS-REP criptato, che abbiamo chiamato hash.asrep1
 john prenderà le password contenute nel file pwdComuni, usando i parametri specificati, relativi al formato e al tipo di crittografia, calcola l’hash di ogni password, da questa ricava la chiave e vede se è corretta per l’AS-REP criptato che gli abbiamo fornito. 
 
@@ -99,11 +76,15 @@ _Figura 3: Esecuzione di john the ripper_
 &nbsp;
 
 
-Dalla figura si evince che l’esecuzione di john ha permesso di determinare che la password di Mario è “ciaoBelli!1”. Questo significa che questa password era presente nel file pwdComuni.txt che è stato passato al tool.
+Dalla figura si evince che l’esecuzione di john ha permesso di determinare che la password di Mario è “ciaoBelli!1”. Questo significa che questa password era presente nel file pwdComuni.txt che è stato passato al tool. 
+
+
+Ne consegue che un attaccante che non conosceva la password di un utente ha ottenuto in risposta dal DC un messaggio criptato con la chiave di questo utente. L'attaccante dunque, montando un password cracking attack, può determinare la password di questo utente. 
+
 
 &nbsp;
 
-## Password Cracking di AS-REQ:
+## Network Sniffing di AS-REQ + Password Cracking
 
 ### Contesto
 Nell’ambito dell’autenticazione di un utente con il protocollo Kerberos, la workstation su cui un utente si vuole autenticare ed il nodo su cui è presente il domain controller si scambiano dei pacchetti volti a verificare se l’utente può essere autenticato su quella workstation. In particolare il primo messaggio inviato dalla workstation viene denominato AS-REQ, ovvero Authentication Service Request ed è criptato con la chiave dell’utente. 
