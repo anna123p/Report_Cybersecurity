@@ -59,7 +59,7 @@ Dalla figura si vede che:
 Analizziamo meglio la risposta del DC: "krb5asrep" è il formato con cui vengono rappresentati i dati di un AS-REP del protocollo Kerberos. "23" indica che il tipo di crittografia utilizzata è RC4-HMAC. Questo è interessante perché indica che GetNPUsers ha richiesto al DC che l'AS-REP venisse criptato utilizzando RC4, un algoritmo di crittografia più lento rispetto ad AES (algoritmo usato di default in kerberos). Grazie a questo, il cracking tool che useremo richiederà meno tempo per portare a termine il password cracking e quindi determinare la password dell'utente Mario. <br>
 In quanto segue indicheremo, per compattezza di notazione, K_mario come la chiave dell'utente Mario.
 
-Per eseguire il password cracking utilizziamo john the ripper (john). La stringa ottenuta in riposta dal DC verrà salvata in un file di testo, denominato hash.asrep1. Quindi verrà lanciato john, a cui passiamo:
+Per eseguire il password cracking utilizziamo john the ripper (john)^[5]. La stringa ottenuta in riposta dal DC verrà salvata in un file di testo, denominato hash.asrep1. Quindi verrà lanciato john, a cui passiamo:
 - un file di testo contenente ipotetiche password, qui denominato pwdComunit.txt;
 - krb5asrep: il formato con cui calcolare l’hash (poi dal hash si ottiene la chiave); 
 - il file contente AS-REP criptato con K_mario, qui hash.asrep1.
@@ -83,7 +83,7 @@ In conclusione, da questa parte della demo si è visto come un attaccante che no
 
 ### Contesto
 Nell’ambito dell’autenticazione di un utente con il protocollo Kerberos, la workstation su cui l'utente ha inserito le credenziali scambia dei pacchetti con il nodo su cui è presente il DC con il protocollo Kerberos; tale scambio è volto a consentire o negare l'autenticazione di tale utente. In particolare il primo messaggio inviato dalla workstation viene denominato AS-REQ (Authentication Service Request) ed è criptato con la chiave dell’utente. <br>
-L’obiettivo di questa parte di demo è intercettare l’AS-REQ di un utente inserito nel dominio mynetwork.local e montare un attacco di tipo password cracking per risalire alla password di tale utente^[5]. 
+L’obiettivo di questa parte di demo è intercettare l’AS-REQ di un utente inserito nel dominio mynetwork.local e montare un attacco di tipo password cracking per risalire alla password di tale utente[^6]. 
 
 ## Esecuzione dell’Attacco 
 L’idea è quella di intercettare lo scambio di pacchetti fra il nodo su cui un utente si autenticherà e il nodo su cui è presente il DC. Per farlo occorre diventare Man In The Middle (MITM). Questo perché le macchine virtuali sono configurate per quanto riguarda la rete con “Internal Network” quindi la rete viene gestita da uno “switch virtuale” e gli switch utilizzano le tabelle di indirizzi MAC e lavorano inviando pacchetti solo alla porta che corrisponde all'indirizzo MAC del destinatario. Ne consegue che l’attaccante, restando all’esterno della comunicazione non riesce a vedere i pacchetti scambiati fra due nodi. Pertanto l’attaccante deve fare in modo che il traffico passi attraverso di lui. Ne deriva l’esigenza di diventare MITM. In questa demo l’attaccante diventerà MITM utilizzando ettercap, un tool di kali che permette di eseguire un ARP spoofing, quindi di diventare MITM a livello Ethernet. 
@@ -128,7 +128,7 @@ Questi sono tutti parametri che ci serviranno per costruire la stringa da passar
 &nbsp;
 
 
-Per costruire la stringa da passare a hashcat si possono consultare degli esempi online[^6], in particolare andranno inseriti:
+Per costruire la stringa da passare a hashcat si possono consultare degli esempi online[^7], in particolare andranno inseriti:
 - il formato con cui calcolare l’hash, qui krb5pa. Dall’hash si risale alla chiave; 
 - il tipo di crittografia utilizzata per generare il valore “cipher”, qui 18;
 - username dell’utente di cui abbiamo intercettato AS-REQ, qui tecnico2;
@@ -151,12 +151,19 @@ In conclusione, in questa parte della demo si è visto come un attaccante in gra
 
 
 ## Bibliografia
-[^1] Installare e Configurare Active Directory: https://www.youtube.com/watch?v=0cXUr7b6KgI
-[^2] AS-REP roasting: https://www.youtube.com/watch?v=wA9w8t1fRWo
-[^3] GetNPUsers: https://forum.hackthebox.com/t/getnpusers-py-explained-video/2297 
-[^4] Codice GetNPUsers: https://github.com/fortra/impacket/blob/master/examples/GetNPUsers.py
-[^5] Ottenere pwd quando pre-auth è richiesto: https://www.youtube.com/watch?v=VLA7x81i5Pw
-[^6] Esempi hashcat: https://hashcat.net/wiki/doku.php?id=example_hashes
+[^1]: Installare e Configurare Active Directory: https://www.youtube.com/watch?v=0cXUr7b6KgI
+
+[^2]: AS-REP roasting: https://www.youtube.com/watch?v=wA9w8t1fRWo
+
+[^3]: GetNPUsers: https://forum.hackthebox.com/t/getnpusers-py-explained-video/2297 
+
+[^4]: Codice python GetNPUsers: https://github.com/fortra/impacket/blob/master/examples/GetNPUsers.py
+
+[^5]: John the Ripper: https://pentestlab.blog/2024/02/20/as-rep-roasting/
+
+[^6]: Ottenere pwd quando pre-auth è richiesto: https://www.youtube.com/watch?v=VLA7x81i5Pw
+
+[^7]: Esempi hashcat: https://hashcat.net/wiki/doku.php?id=example_hashes
 
 
 
