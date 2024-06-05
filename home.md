@@ -82,7 +82,7 @@ In conclusione, da questa parte della demo si è visto come un attaccante che no
 ## Network Sniffing di AS-REQ + Password Cracking
 
 ### Contesto
-Nell’ambito dell’autenticazione di un utente con il protocollo Kerberos, la workstation su cui l'utente ha inserito le credenziali scambia dei pacchetti con il nodo su cui è presente il DC con il protocollo Kerberos; tale scambio è volto a consentire o negare l'autenticazione di tale utente. In particolare il primo messaggio inviato dalla workstation viene denominato AS-REQ (Authentication Service Request) ed è criptato con la chiave dell’utente. <br>
+Nell’ambito dell’autenticazione di un utente con il protocollo Kerberos, la workstation su cui l'utente ha inserito le credenziali scambia dei pacchetti con il nodo su cui è presente il DC con il protocollo Kerberos; tale scambio è volto a consentire o negare l'autenticazione di tale utente. In particolare il primo messaggio inviato dalla workstation viene denominato AS-REQ ed è criptato con la chiave dell’utente. <br>
 L’obiettivo di questa parte di demo è intercettare l’AS-REQ di un utente inserito nel dominio mynetwork.local e montare un attacco di tipo password cracking per risalire alla password di tale utente[^6]. 
 
 ## Esecuzione dell’Attacco 
