@@ -44,7 +44,7 @@ Questo tipo di attacco ha come presupposto il fatto che all’interno del domini
 In questa demo verrà utilizzato lo script python GetNPUsers,[^3] che appartiene al toolkit Impacket (una raccolta di classi python per lavorare con i protocolli di rete). Tramite LDAP queries, GetNPUsers contatta il DC per verificare se gli username che passiamo in un file di testo corrispondono a utenti inseriti nel dominio considerato e, in particolare se, fra questi, qualcuno non richiede preauthentication. Una volta trovato un utente che soddisfi questi requisiti, lo script costruisce un AS-REQ a suo nome da inviare in chiaro al DC, il quale risponderà con un AS-REP contente il TGT e una parte di messaggio criptata nella chiave dell'utente.[^4] 
 
 ![The Markdown Mark](images/impacket.png)
-_Figura 2: Esecuzione e risultato di GetNPUsers_
+_Figura 1: Esecuzione e risultato di GetNPUsers_
 
 Per eseguire questo comando è necessario:
 - avere a disposizione un file di testo, in figura denominato names.txt, che contenga un elenco di potenziali username del dominio;
@@ -70,7 +70,7 @@ Il tool agirà nel modo seguente. Per ogni password (pwd) in pwdComuni.txt:
 - prova K_H(pwd) sul messaggio criptato e vede se è la chiave giusta, cioè se corrisponde a K_mario.
 
 ![The Markdown Mark](images/john.png)
-_Figura 3: Esecuzione di john the ripper_
+_Figura 2: Esecuzione di john the ripper_
 
 Dalla figura si evince che l’esecuzione di john ha permesso di determinare che la password di Mario è “ciaoBelli!1”. Questo significa che questa password era presente nel file pwdComuni.txt che è stato passato al tool. K_mario è stata quindi ottenuta proprio a partire dall'hash di questa password.
 
@@ -93,12 +93,12 @@ La figura seguente illustra l’esecuzione di ettercap. Il presupposto è quello
 
 &nbsp;
 
-<img src="images/ettercap.png" alt="Esecuzione di ettercap" width="600"> _Figura 4: Esecuzione di ettercap_
+<img src="images/ettercap.png" alt="Esecuzione di ettercap" width="600"> _Figura 3: Esecuzione di ettercap_
 
 &nbsp;
 
 ![The Markdown Mark](images/ARP.png)
-_Figura 5: Pacchetti ARP che permettono all'attaccante di diventare MITM a livello Ethernet_ 
+_Figura 4: Pacchetti ARP che permettono all'attaccante di diventare MITM a livello Ethernet_ 
 
 Da questo estratto di wireshark si coglie lo scambio di pacchetti ARP che ha permesso all’attaccante di associare il proprio indirizzo MAC (quello di kali, che è la macchina da cui l’attaccante opera) agli indirizzi IP dei due nodi. In particolare:
 - 192.168.1.137 è l’indirizzo IP della macchina Windows 10;  
@@ -109,7 +109,7 @@ Ne consegue che qualunque messaggio indirizzato a 192.168.1.137 verrà inviato a
 Ora l’attaccante è diventato MITM fra il nodo su cui sta il DC e un nodo in particolare dell’organizzazione. Supponiamo ora che, su quella macchina, ci sia un utente (con pre authentication) che esegue un interactive logon. L’attaccante riesce ad intercettare lo scambio di pacchetti fra la workstation e il DC. Per farlo utilizzeremo wireshark, l’interfaccia di rete che intercettiamo è eth0, filtriamo utilizzando il protocollo kerberos, che è quello a cui siamo interessati.
 
 ![The Markdown Mark](images/wireshark.png)
-_Figura 6: Scambio di pacchetti intercettato con Wireshark_
+_Figura 5: Scambio di pacchetti intercettato con Wireshark_
 
 
 In particolare, il messaggio a cui siamo interessati è AS-REQ, che, come indicato dalla figura, è il pacchetto che la workstation invia al DC. <br>
@@ -123,7 +123,7 @@ Analizzando più nel dettaglio l’AS-REQ, le informazioni rilevanti per montare
 
 Questi sono tutti parametri che ci serviranno per costruire la stringa da passare al cracking tool (hashcat in questo caso) che verrà utilizzato per eseguire il password cracking. 
 
-<img src="images/AS-REQ.png" alt="AS-REQ" width="600"> _Figura 7: AS-REQ nel dettaglio_ 
+<img src="images/AS-REQ.png" alt="AS-REQ" width="600"> _Figura 6: AS-REQ nel dettaglio_ 
 
 &nbsp;
 
