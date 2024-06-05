@@ -101,8 +101,8 @@ La figura seguente illustra l’esecuzione di ettercap. Il presupposto è quello
 _Figura 4: Pacchetti ARP che permettono all'attaccante di diventare MITM a livello Ethernet_ 
 
 Da questo estratto di wireshark si coglie lo scambio di pacchetti ARP che ha permesso all’attaccante di associare il proprio indirizzo MAC (quello di kali, che è la macchina da cui l’attaccante opera) agli indirizzi IP dei due nodi. In particolare:
-- 192.168.1.137 è l’indirizzo IP della macchina Windows 10;  
-- 192.168.1.233 è l’indirizzo IP del nodo su cui è presente il domain controller.
+- 192.168.1.137 è l’indirizzo IP della macchina con Windows 10;  
+- 192.168.1.233 è l’indirizzo IP del nodo su cui è presente il DC.
 
 Ne consegue che qualunque messaggio indirizzato a 192.168.1.137 verrà inviato a kali; analogamente qualunque messaggio indirizzato a 192.168.1.233 arriverà a kali.
 
