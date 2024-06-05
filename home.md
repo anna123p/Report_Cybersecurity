@@ -67,7 +67,7 @@ Per eseguire il password cracking utilizziamo john the ripper (john). La stringa
 - il file contente AS-REP criptato con K_mario, qui hash.asrep1
 
 Il tool agirà nel modo seguente. Per ogni password (pwd) in pwdComuni.txt:
-- calcola l’hash di ogni password ( H(pwd) ) usando i parametri specificati, relativi al formato e al tipo di crittografia;
+- calcola l’hash, H(pwd), usando i parametri specificati, relativi al formato e al tipo di crittografia;
 - da H(pwd) ricava K_H(pwd);
 - prova K_H(pwd) sul messaggio criptato e vede se è la chiave giusta, cioè se corrisponde a K_mario.
 
